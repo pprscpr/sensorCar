@@ -1,0 +1,859 @@
+<html>
+<head>
+<title>MainActivity.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cc7832;}
+.s1 { color: #a9b7c6;}
+.s2 { color: #808080;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+MainActivity.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">com.example.android2car</span><span class="s0">;</span>
+
+import <span class="s1">android.annotation.SuppressLint</span><span class="s0">;</span>
+import <span class="s1">android.bluetooth.BluetoothAdapter</span><span class="s0">;</span>
+import <span class="s1">android.bluetooth.BluetoothDevice</span><span class="s0">;</span>
+import <span class="s1">android.bluetooth.BluetoothSocket</span><span class="s0">;</span>
+import <span class="s1">android.content.BroadcastReceiver</span><span class="s0">;</span>
+import <span class="s1">android.content.Context</span><span class="s0">;</span>
+import <span class="s1">android.view.Menu</span><span class="s0">;</span>
+import <span class="s1">android.view.MenuInflater</span><span class="s0">;</span>
+import <span class="s1">android.view.MenuItem</span><span class="s0">;</span>
+import <span class="s1">android.view.MotionEvent</span><span class="s0">;</span>
+import <span class="s1">android.content.Intent</span><span class="s0">;</span>
+import <span class="s1">android.content.IntentFilter</span><span class="s0">;</span>
+import <span class="s1">android.os.Handler</span><span class="s0">;</span>
+import <span class="s1">android.os.SystemClock</span><span class="s0">;</span>
+import <span class="s1">androidx.annotation.NonNull</span><span class="s0">;</span>
+import <span class="s1">androidx.appcompat.app.AppCompatActivity</span><span class="s0">;</span>
+import <span class="s1">android.os.Bundle</span><span class="s0">;</span>
+import <span class="s1">android.view.View</span><span class="s0">;</span>
+import <span class="s1">android.webkit.WebView</span><span class="s0">;</span>
+import <span class="s1">android.webkit.WebViewClient</span><span class="s0">;</span>
+import <span class="s1">android.widget.AdapterView</span><span class="s0">;</span>
+import <span class="s1">android.widget.ArrayAdapter</span><span class="s0">;</span>
+import <span class="s1">android.widget.Button</span><span class="s0">;</span>
+import <span class="s1">android.widget.ListView</span><span class="s0">;</span>
+import <span class="s1">android.widget.TextView</span><span class="s0">;</span>
+import <span class="s1">android.widget.Toast</span><span class="s0">;</span>
+import <span class="s1">com.ted.androidtoarduino.R</span><span class="s0">;</span>
+import <span class="s1">java.io.IOException</span><span class="s0">;</span>
+import <span class="s1">java.io.InputStream</span><span class="s0">;</span>
+import <span class="s1">java.io.OutputStream</span><span class="s0">;</span>
+import <span class="s1">java.io.UnsupportedEncodingException</span><span class="s0">;</span>
+import <span class="s1">java.util.Set</span><span class="s0">;</span>
+import <span class="s1">java.util.UUID</span><span class="s0">;</span>
+
+
+<span class="s2">/*Die Main Klasse erbt die Eigenschaften der Klasse AppCompatActivity*/</span>
+<span class="s0">public class </span><span class="s1">MainActivity </span><span class="s0">extends </span><span class="s1">AppCompatActivity {</span>
+
+    <span class="s2">/*Initialisiern der Objekte*/</span>
+    <span class="s0">private </span><span class="s1">TextView                tv_steering</span><span class="s0">;</span>
+    private <span class="s1">TextView                tv_camera</span><span class="s0">;</span>
+    private <span class="s1">TextView                tv_BluetoothStatus</span><span class="s0">;</span>
+    private <span class="s1">TextView                tv_ReadBuffer</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_BTScan</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_BTOff</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_PairedDev</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_Discover</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_up</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_right</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_down</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_left</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_Cam_Up</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_Cam_Right</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_Cam_Down</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_Cam_Left</span><span class="s0">;</span>
+    private <span class="s1">Button                  btn_refresh</span><span class="s0">;</span>
+    private <span class="s1">WebView                 webView</span><span class="s0">;</span>
+
+    <span class="s2">/*Der BluetoothAdapter ist der Eintritts-Punkt für jede Bluetooth Interaktion*/</span>
+    <span class="s0">private </span><span class="s1">BluetoothAdapter        BTAdapter</span><span class="s0">;</span>
+    private <span class="s1">Set&lt;BluetoothDevice&gt;    PairedDevices</span><span class="s0">;</span>
+    <span class="s2">/*Der ArrayAdapter wird nachher die Namen und Adressen der bekannten BT-Geräte beinhalten */</span>
+    <span class="s0">private </span><span class="s1">ArrayAdapter&lt;String&gt;    BTArrayAdapter</span><span class="s0">;</span>
+    private <span class="s1">ListView                DevicesListView</span><span class="s0">;</span>
+
+    <span class="s2">/*Ein Handler der die Nachrichten zwischen Main und Connected Thread handelt */</span>
+    <span class="s0">private </span><span class="s1">Handler                 Handler</span><span class="s0">;</span>
+    <span class="s2">/* Ein Thread, der wenn die Bluetooth Verbindung hergestellt wird, Daten sendet und empfängt */</span>
+    <span class="s0">private </span><span class="s1">ConnectedThread         ConnectedThread</span><span class="s0">;    </span><span class="s2">// bluetooth background worker thread to send and receive data</span>
+    /*Eine bi-direktionaler client to client Datenerbindung */
+    <span class="s0">private </span><span class="s1">BluetoothSocket         BTSocket = </span><span class="s0">null;    </span><span class="s2">// bi-directional client-to-client data path</span>
+    /*User-Uniqe-ID um den Nutzer zu Identifizieren*/
+    <span class="s0">private static final </span><span class="s1">UUID BTMODULEUUID = UUID.fromString(</span><span class="s3">&quot;00001101-0000-1000-8000-00805F9B34FB&quot;</span><span class="s1">)</span><span class="s0">; </span><span class="s2">// &quot;random&quot; unique identifier</span>
+
+    /*#defines für die Kommunikation zwischen Prozessen*/
+    <span class="s0">private final static int </span><span class="s1">REQUEST_ENABLE_BT = </span><span class="s4">1</span><span class="s0">;     </span><span class="s2">// wird benutzt um BT-Namen hinzuzufügen</span>
+    <span class="s0">private final static int </span><span class="s1">MESSAGE_READ = </span><span class="s4">2</span><span class="s0">;          </span><span class="s2">// wird im BT-Handler benutzt um festzustellen ob eine Nachricht bereit ist.</span>
+    <span class="s0">private final static int </span><span class="s1">CONNECTING_STATUS = </span><span class="s4">3</span><span class="s0">;     </span><span class="s2">// wird im BT-Handler benutzt um festzustellen in welchem Status sich die Nachricht befindet.</span>
+
+    <span class="s0">int </span><span class="s1">stateOfPairedList</span><span class="s0">;</span>
+
+    <span class="s1">@SuppressLint(</span><span class="s3">&quot;ClickableViewAccessibility&quot;</span><span class="s1">)</span>
+    @Override
+    <span class="s0">protected void </span><span class="s1">onCreate(Bundle savedInstanceState) {</span>
+        <span class="s0">super</span><span class="s1">.onCreate(savedInstanceState)</span><span class="s0">;</span>
+        <span class="s1">setContentView(R.layout.activity_main)</span><span class="s0">;</span>
+
+        <span class="s2">/*Bindung der vorher festgelegten Objekte an die grafischen Obejekte. 
+        die Verbdingung funktioniert mit der Methode findViewByID. 
+        Zu finden sind diese in der main_menu.xml*/</span>
+        <span class="s1">tv_steering =           findViewById(R.id.tv_steering)</span><span class="s0">;</span>
+        <span class="s1">tv_camera =             findViewById(R.id.tv_camera)</span><span class="s0">;</span>
+        <span class="s1">tv_BluetoothStatus =    findViewById(R.id.tv_bluetoothStatus)</span><span class="s0">;</span>
+        <span class="s1">tv_ReadBuffer =         findViewById(R.id.tv_readBuffer)</span><span class="s0">;</span>
+        <span class="s1">btn_BTScan =            findViewById(R.id.btn_scan)</span><span class="s0">;</span>
+        <span class="s1">btn_BTOff =             findViewById(R.id.btn_off)</span><span class="s0">;</span>
+        <span class="s1">btn_Discover =          findViewById(R.id.dtn_discover)</span><span class="s0">;</span>
+        <span class="s1">btn_PairedDev =         findViewById(R.id.btn_paired_dev)</span><span class="s0">;</span>
+        <span class="s1">DevicesListView =       findViewById(R.id.devicesListView)</span><span class="s0">;</span>
+        <span class="s1">btn_up =                findViewById(R.id.btn_up)</span><span class="s0">;</span>
+        <span class="s1">btn_right =             findViewById(R.id.btn_right)</span><span class="s0">;</span>
+        <span class="s1">btn_down =              findViewById(R.id.btn_down)</span><span class="s0">;</span>
+        <span class="s1">btn_left =              findViewById(R.id.btn_left)</span><span class="s0">;</span>
+        <span class="s1">btn_Cam_Up =            findViewById(R.id.btn_Cam_up)</span><span class="s0">;</span>
+        <span class="s1">btn_Cam_Right =         findViewById(R.id.btn_Cam_right)</span><span class="s0">;</span>
+        <span class="s1">btn_Cam_Down =          findViewById(R.id.btn_Cam_down)</span><span class="s0">;</span>
+        <span class="s1">btn_Cam_Left =          findViewById(R.id.btn_Cam_left)</span><span class="s0">;</span>
+        <span class="s1">webView =               findViewById(R.id.webView)</span><span class="s0">;</span>
+        <span class="s1">btn_refresh =           findViewById(R.id.btn_refresh)</span><span class="s0">;</span>
+        <span class="s2">/*Der ArrayAdapter holt sich die Eigenschaften der BT-Geräte*/</span>
+        <span class="s1">BTArrayAdapter = </span><span class="s0">new </span><span class="s1">ArrayAdapter&lt;String&gt;(</span><span class="s0">this,</span><span class="s1">android.R.layout.simple_list_item_1)</span><span class="s0">;</span>
+        <span class="s1">BTAdapter = BluetoothAdapter.getDefaultAdapter()</span><span class="s0">;</span>
+        <span class="s2">/*Eigenschaften aus BTArrayAdapter werden nun an ein ListView gebunden*/</span>
+        <span class="s1">DevicesListView.setAdapter(BTArrayAdapter)</span><span class="s0">;</span>
+        <span class="s2">/*Einzelne Items im ListView werden klickbar gemacht*/</span>
+        <span class="s1">DevicesListView.setOnItemClickListener(mDeviceClickListener)</span><span class="s0">;</span>
+        <span class="s2">/*Hilfsvariable für Anzeige der Geräte-ListView*/</span>
+        <span class="s1">stateOfPairedList = </span><span class="s4">0</span><span class="s0">;</span>
+
+        <span class="s2">/*Aufruf der Funktion webViewInit() um den WebView ui initialisieren 
+        * indem nachher die Html-Seite/Html-Template mit den Live-Stream angezeigt wird*/</span>
+        <span class="s1">webViewInit()</span><span class="s0">;</span>
+
+
+        <span class="s2">/*Ein Handler der die Nachrichten zwischen Main und Connected Thread handelt 
+          Vom Arduino übertragene Daten werden nachher im TextView tv_ReadBuffer zu lesen sein. 
+          Der Status ob ein Gerät verbunden ,welches Gerät verbunden wurde oder ob die Verbindung fehlgeschlagen ist 
+          wird im TextView tv_BluetoothStatus zu lesen sein.*/</span>
+        <span class="s1">Handler = </span><span class="s0">new </span><span class="s1">Handler(){</span>
+            <span class="s0">public void </span><span class="s1">handleMessage(android.os.Message msg){</span>
+                <span class="s0">if</span><span class="s1">(msg.what == MESSAGE_READ){</span>
+                    String readMessage = <span class="s0">null;</span>
+                    try <span class="s1">{</span>
+                        readMessage = <span class="s0">new </span><span class="s1">String( (</span><span class="s0">byte</span><span class="s1">[]) msg.obj</span><span class="s0">, </span><span class="s3">&quot;UTF-8&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(UnsupportedEncodingException e) {</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+
+                    tv_ReadBuffer.setText((String)readMessage + <span class="s3">&quot;</span><span class="s0">\n</span><span class="s3">&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">}</span>
+
+                <span class="s0">if</span><span class="s1">(msg.what == CONNECTING_STATUS){</span>
+                    <span class="s0">if</span><span class="s1">(msg.arg1 == </span><span class="s4">1</span><span class="s1">)</span>
+                        tv_BluetoothStatus.setText(<span class="s3">&quot;Connected to Device: &quot; </span><span class="s1">+ (String)(msg.obj))</span><span class="s0">;</span>
+                    else
+                        <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Connection Failed&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                <span class="s1">}</span>
+            }
+        }<span class="s0">;</span>
+
+
+        <span class="s2">/*Auch wenn man davon ausgehen kann, dass die allermeisten (Android-)Smartphones über Bluetooth verfügen, 
+         sollte man jedoch als guter Entwickler immer testen, ob ein zu benutzender Dienst auch existiert. 
+         Das in Android zu überprüfen.*/</span>
+        <span class="s0">if </span><span class="s1">(BTArrayAdapter == </span><span class="s0">null</span><span class="s1">) {</span>
+            <span class="s2">// Device does not support Bluetooth</span>
+            <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Status: Bluetooth not found&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">Toast.makeText(getApplicationContext()</span><span class="s0">,</span><span class="s3">&quot;Bluetooth device not found!&quot;</span><span class="s0">,</span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+        <span class="s1">}</span>
+        <span class="s0">else </span><span class="s1">{</span>
+            <span class="s2">/*Ein OnTouchListener hört darauf ob ein Objekt berührt wurde 
+             in diesem Fall wird beschrieben was passieren soll, wenn die &quot;Kamera nach oben Taste&quot; 
+             gedrückt wird und was passieren soll , wenn sie wieder losgelassen wird. 
+             In diesem Fall also, wenn ein Button berührt ist &quot;MotionEvent.ACTION_DOWN&quot; wird 
+             ein String mit dem Inhalt &quot;i&quot; geschrieben. Dieses &quot;i&quot; erhält nun das andere Ende der Bluetooth-Verbindung, 
+             also unser Bluetooth-Stick am Arduino. Jenes &quot;i&quot; wird jetzt vom Arduino ausgewertet und es wird 
+             die Funktion Kamera nach oben aufgerufen. 
+             Gleich verhät es sich mit den anderen Funktionen. Als weiteres Beispiel: Vorwärts fahren sendet bei Betätigung 
+             des Buttons ein &quot;F&quot; und bei loslassen ein &quot;S&quot;. Damit wird sichergestellt das bei loslassen des Buttons wieder angehalten wird. 
+             Um sicherzugehen das im Fehlerfall unser Programm nicht abstürzt, wurde ein Exception Handling eingeführt(try, catch). 
+             Ein Fehler könnte Beispielsweise sein das eine Taste betätigt wird und noch keine Verbindung besteht. 
+             Die Methode &quot;setOnTouchListener(new View.OnTouchListener()&quot; ist eine Schnittstellendefinition für einen Callback, 
+             der aufgerufen wird, wenn ein Berührungsereignis an diese View gesendet wird. 
+             Der Callback wird aufgerufen, bevor das Touch-Ereignis an die View übergeben wird. 
+ 
+             public  boolean onTouch (View v, MotionEvent event) 
+             Wird aufgerufen, wenn ein Berührungsereignis an einen View gesendet wird. 
+             v      : View: Der View, an den das Berührungsereignis gesendet wurde. 
+             event   : MotionEvent: Das MotionEvent-Objekt mit vollständigen Informationen zum Ereignis. 
+             Returns : boolean :    True wenn der Listener meldet das er &quot;betätigt&quot;, ansonten false. 
+             */</span>
+
+            /*Kamera nach oben Button*/
+            <span class="s1">btn_Cam_Up.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override <span class="s2">// eine Methode wird überschrieben</span>
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                        <span class="s0">try </span><span class="s1">{</span>
+                            <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                            <span class="s0">if </span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN) {</span>
+                                <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                                <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                    <span class="s2">// schreibe ein &quot;i&quot; über den Kommunikationsthread an das Endgerät. Kamera nach oben!</span>
+                                    <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;i&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                            <span class="s1">}</span>
+                            <span class="s2">// was soll passieren wenn die Taste unberührt ist ? (ACTION_UP)</span>
+                            <span class="s0">if </span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP) {</span>
+                                <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                                <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">) </span><span class="s0">;</span>
+                                <span class="s2">// schreibe ein &quot;x&quot; über den Kommunikationsthread an das Endgerät.</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;x&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                            <span class="s1">}</span>
+                            <span class="s0">return true;</span>
+                            <span class="s2">// Exceptionhandling</span>
+                        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {</span>
+                            e.printStackTrace()<span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return false;</span>
+
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Kamera nach links Button*/</span>
+            <span class="s1">btn_Cam_Left.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try </span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if </span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN) {</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;j&quot; über den Kommunikationsthread an das Endgerät. Kamera nach links!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;j&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s2">// was soll passieren wenn die Taste unberührt ist ? (ACTION_UP)</span>
+                        <span class="s0">if </span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP) {</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">) </span><span class="s0">;</span>
+                                <span class="s2">// schreibe ein &quot;x&quot; über den Kommunikationsthread an das Endgerät.</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;x&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Kamera nach rechts Button*/</span>
+            <span class="s1">btn_Cam_Right.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;l&quot; über den Kommunikationsthread an das Endgerät. Kamera nach rechts!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;l&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span><span class="s0">;</span>
+                                <span class="s2">// schreibe ein &quot;x&quot; über den Kommunikationsthread an das Endgerät.</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;x&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Kamera nach unten Button*/</span>
+            <span class="s1">btn_Cam_Down.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;k&quot; über den Kommunikationsthread an das Endgerät. Kamera nach unten!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;k&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                            <span class="s1">}</span>
+                            <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                                <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                                <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span><span class="s0">;</span>
+                                    <span class="s2">// schreibe ein &quot;x&quot; über den Kommunikationsthread an das Endgerät.</span>
+                                    <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;x&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(Exception e) {</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Vorwärts fahren Button*/</span>
+            <span class="s1">btn_up.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;F&quot; über den Kommunikationsthread an das Endgerät. Vorwärts fahren!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;F&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;S&quot; über den Kommunikationsthread an das Endgerät. Anhalten!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;S&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">}</span><span class="s0">catch</span><span class="s1">(Exception e){</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+
+            })<span class="s0">;</span>
+            <span class="s2">/*Nach rechts fahren Button*/</span>
+            <span class="s1">btn_right.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                     <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;R&quot; über den Kommunikationsthread an das Endgerät. Nach rechts fahren!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;R&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;S&quot; über den Kommunikationsthread an das Endgerät. Anhalten!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;S&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                         <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">}</span><span class="s0">catch</span><span class="s1">(Exception e){</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Rückwärts fahren Button*/</span>
+            <span class="s1">btn_down.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;B&quot; über den Kommunikationsthread an das Endgerät. Rückwärts fahren!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;B&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;S&quot; über den Kommunikationsthread an das Endgerät. Anhalten!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;S&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">}</span><span class="s0">catch</span><span class="s1">(Exception e){</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*nach links fahren Button*/</span>
+            <span class="s1">btn_left.setOnTouchListener(</span><span class="s0">new </span><span class="s1">View.OnTouchListener() {</span>
+
+                @Override
+                <span class="s0">public boolean </span><span class="s1">onTouch(View v</span><span class="s0">, </span><span class="s1">MotionEvent event) {</span>
+                    <span class="s0">try</span><span class="s1">{</span>
+                        <span class="s2">// was soll passieren wenn die Taste berührt ist ? (ACTION_DOWN)</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_DOWN){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;L&quot; über den Kommunikationsthread an das Endgerät. Nach links fahren!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;L&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">if</span><span class="s1">(event.getAction() == MotionEvent.ACTION_UP){</span>
+                            <span class="s2">// ist der Kommunikationsthread noch aktiv ?</span>
+                            <span class="s0">if</span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">)</span>
+                                <span class="s2">// schreibe ein &quot;S&quot; über den Kommunikationsthread an das Endgerät. Anhalten!</span>
+                                <span class="s1">ConnectedThread.write(</span><span class="s3">&quot;S&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                        <span class="s0">return true;</span>
+                        <span class="s2">// Exceptionhandling</span>
+                    <span class="s1">}</span><span class="s0">catch</span><span class="s1">(Exception e){</span>
+                        e.printStackTrace()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s0">return false;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Bluetooth einschalten Button*/</span>
+            <span class="s1">btn_BTScan.setOnClickListener(</span><span class="s0">new </span><span class="s1">View.OnClickListener() {</span>
+                @Override <span class="s2">// Methode überschreiben</span>
+                <span class="s0">public void </span><span class="s1">onClick(View v) {</span>
+                    bluetoothOn(v)<span class="s0">;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Bluetooth ausschalten Button*/</span>
+            <span class="s1">btn_BTOff.setOnClickListener(</span><span class="s0">new </span><span class="s1">View.OnClickListener(){</span>
+                @Override <span class="s2">// Methode überschreiben</span>
+                <span class="s0">public void </span><span class="s1">onClick(View v){</span>
+                    bluetoothOff(v)<span class="s0">;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Bekannte BT-Geräte auflisten Button*/</span>
+            <span class="s1">btn_PairedDev.setOnClickListener(</span><span class="s0">new </span><span class="s1">View.OnClickListener() {</span>
+                @Override <span class="s2">// Methode überschreiben</span>
+                <span class="s0">public void </span><span class="s1">onClick(View v){</span>
+                    listPairedDevices()<span class="s0">;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*Nach neuen BT-Geräte suchen Button*/</span>
+            <span class="s1">btn_Discover.setOnClickListener(</span><span class="s0">new </span><span class="s1">View.OnClickListener(){</span>
+                @Override <span class="s2">// Methode überschreiben</span>
+                <span class="s0">public void </span><span class="s1">onClick(View v){</span>
+                    discover(v)<span class="s0">;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+            <span class="s2">/*WebView (Streamanzeige) aktuellisieren Button*/</span>
+            <span class="s1">btn_refresh.setOnClickListener(</span><span class="s0">new </span><span class="s1">View.OnClickListener(){</span>
+                @Override <span class="s2">// Methode überschreiben</span>
+                <span class="s0">public void </span><span class="s1">onClick(View v){</span>
+                    webView.reload()<span class="s0">;</span>
+                <span class="s1">}</span>
+            })<span class="s0">;</span>
+        <span class="s1">}</span>
+    }<span class="s2">//onCreate</span>
+
+
+
+
+    /* Um zu testen, ob das Smartphone über Bluetooth verfügt, holen wir uns vom System den BluetoothAdapter über die Methode getDefaultAdapter(). 
+    Dieser BluetoothAdapter stellt die Repräsentation des eigenen Bluetooth-Gerätes dar. 
+    Wenn man als Rückgabewert ein NULL erhält, besitzt das Gerät kein Bluetooth. 
+    Wenn das Gerät über Bluetooth verfügt, muss sichergestellt werden, 
+    dass es auch zum Zeitpunkt der Nutzung aktiviert ist. 
+    Die Aktivierung muss aber nochmals explizit durch den Nutzer bestätigt werden. 
+    Wenn Bluetooth noch nicht aktiv ist, dann wird ein Intent mit der BluetoothAdapter. 
+    ACTION_REQUEST_ENABLE-Aktion erzeugt, welche per startActivityForResult()-Methode ins System abgesetzt wird. 
+    Dadurch öffnet sich ein Dialog, welcher den Nutzer fragt, ob Bluetooth aktiviert werden soll oder nicht. 
+    Durch startActivityForResult() wird nach Abarbeitung des Intents bzw. 
+    die Antwort des Nutzers, die Callback-Methode onActivityResult() aufgerufen. 
+    Dieser ResultCode muss allerdings zunächst definiert werden.*/
+    <span class="s0">private void </span><span class="s1">bluetoothOn(View view){</span>
+        <span class="s0">if </span><span class="s1">(!BTAdapter.isEnabled()) {</span>
+            Intent enableBtIntent = <span class="s0">new </span><span class="s1">Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)</span><span class="s0">;</span>
+            <span class="s1">startActivityForResult(enableBtIntent</span><span class="s0">, </span><span class="s1">REQUEST_ENABLE_BT)</span><span class="s0">;</span>
+            <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Bluetooth enabled&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">Toast.makeText(getApplicationContext()</span><span class="s0">,</span><span class="s3">&quot;Bluetooth turned on&quot;</span><span class="s0">,</span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+
+        <span class="s1">}</span>
+        <span class="s0">else</span><span class="s1">{</span>
+            Toast.makeText(getApplicationContext()<span class="s0">,</span><span class="s3">&quot;Bluetooth is already on&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+        <span class="s1">}</span>
+    }
+
+    <span class="s2">/*Durch Auslesen des ResultCodes kann abgelesen werden, ob die Aktivierung erfolgreich war oder nicht.*/</span>
+    <span class="s1">@Override</span>
+    <span class="s0">protected void </span><span class="s1">onActivityResult(</span><span class="s0">int </span><span class="s1">requestCode</span><span class="s0">, int </span><span class="s1">resultCode</span><span class="s0">, </span><span class="s1">Intent Data) {</span>
+        <span class="s2">/*Überprüfen um welchen Request es sich handelt*/</span>
+        <span class="s0">super</span><span class="s1">.onActivityResult(requestCode</span><span class="s0">, </span><span class="s1">resultCode</span><span class="s0">, </span><span class="s1">Data)</span><span class="s0">;</span>
+        if <span class="s1">(requestCode == REQUEST_ENABLE_BT) {</span>
+            <span class="s2">/*Sicherstellen des der Request erfolgreich war*/</span>
+            <span class="s0">if </span><span class="s1">(resultCode == RESULT_OK) {</span>
+                <span class="s2">/*der User hat einen Kontakt ausgewählt*/</span>
+                /*Die Uri des Intents übergibt welcher Kontakt ausgewählt wurde*/
+                <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Enabled&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">else</span>
+                <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Disabled&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">}</span>
+    }
+    <span class="s2">/*Um die Bluetooth-Verbindung auf dem Gerät wieder zu deaktivieren benutzen wir die Methode disble().*/</span>
+    <span class="s0">private void </span><span class="s1">bluetoothOff(View view){</span>
+        BTAdapter.disable()<span class="s0">; </span><span class="s2">// turn off</span>
+        <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Bluetooth disabled&quot;</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">Toast.makeText(getApplicationContext()</span><span class="s0">,</span><span class="s3">&quot;Bluetooth turned Off&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+    <span class="s1">}</span>
+
+    <span class="s2">/*Neue Geräte suchen 
+    Wenn man eine Verbindung zu einem dem eigenem Gerät noch unbekanntem Gerät herstellen will, 
+    muss man zunächst nach diesem Gerät suchen. Dies erreicht man durch den Aufruf der Methode startDiscovery(). 
+    Der Aufruf dieser Methode löst eine asynchrone Suche aus. Nach Beendigung dieser Suche, 
+    wird durch das Aussenden der Aktion ACTION_FOUND in das System das Ergebnis dem System zugänglich gemacht und kann abgefragt werden. 
+    Zu diesem Zweck benötigt man einen BroadcastReceiver, 
+    der auf die Beendigung der Suche reagiert. 
+    Wird in unserer allerdings nicht benutzt*/</span>
+    <span class="s0">private void </span><span class="s1">discover(View view){</span>
+        <span class="s0">if</span><span class="s1">(BTAdapter.isDiscovering()){</span>
+            BTAdapter.cancelDiscovery()<span class="s0">;</span>
+            <span class="s1">Toast.makeText(getApplicationContext()</span><span class="s0">,</span><span class="s3">&quot;Discovery stopped&quot;</span><span class="s0">,</span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+        <span class="s1">}</span>
+        <span class="s0">else</span><span class="s1">{</span>
+            <span class="s0">if</span><span class="s1">(BTAdapter.isEnabled()) {</span>
+                BTArrayAdapter.clear()<span class="s0">;</span>
+                <span class="s1">BTAdapter.startDiscovery()</span><span class="s0">;</span>
+                <span class="s1">Toast.makeText(getApplicationContext()</span><span class="s0">, </span><span class="s3">&quot;Discovery started&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                <span class="s1">registerReceiver(blReceiver</span><span class="s0">, new </span><span class="s1">IntentFilter(BluetoothDevice.ACTION_FOUND))</span><span class="s0">;</span>
+            <span class="s1">}</span>
+            <span class="s0">else</span><span class="s1">{</span>
+                Toast.makeText(getApplicationContext()<span class="s0">, </span><span class="s3">&quot;Bluetooth not on&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        }
+    }
+
+    <span class="s2">/*Neue Geräte suchen 
+    Wenn man eine Verbindung zu einem dem eigenem Gerät noch unbekanntem Gerät herstellen will, 
+    muss man zunächst nach diesem Gerät suchen. Dies erreicht man durch den Aufruf der Methode startDiscovery(). 
+    Der Aufruf dieser Methode löst eine asynchrone Suche aus. Nach Beendigung dieser Suche, 
+    wird durch das Aussenden der Aktion ACTION_FOUND in das System das Ergebnis dem System zugänglich gemacht und kann abgefragt werden. 
+    Zu diesem Zweck benötigt man einen BroadcastReceiver, der auf die Beendigung der Suche reagiert. */</span>
+    <span class="s0">final </span><span class="s1">BroadcastReceiver blReceiver = </span><span class="s0">new </span><span class="s1">BroadcastReceiver() {</span>
+        @Override
+        <span class="s0">public void </span><span class="s1">onReceive(Context context</span><span class="s0">, </span><span class="s1">Intent intent) {</span>
+            String action = intent.getAction()<span class="s0">;</span>
+            if<span class="s1">(BluetoothDevice.ACTION_FOUND.equals(action)){</span>
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)<span class="s0">;</span>
+                <span class="s2">// add the name to the list</span>
+                <span class="s1">BTArrayAdapter.add(device.getName() + </span><span class="s3">&quot;</span><span class="s0">\n</span><span class="s3">&quot; </span><span class="s1">+ device.getAddress())</span><span class="s0">;</span>
+                <span class="s1">BTArrayAdapter.notifyDataSetChanged()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+        }
+    }<span class="s0">;</span>
+
+
+    <span class="s2">/*Gepaarte Geräte 
+    Wenn man eine Verbindung zu einem bereits bekannten Gerät aufbauen möchte, 
+    muss man keine neue Suche nach anderen Geräten starten, da man alle Informationen auf dem eigenen Gerät finden kann. 
+    Durch die Methode getBondedDevices() wird die Liste aller gespeicherten und gepaarten Geräte abgerufen. */</span>
+    <span class="s0">private void </span><span class="s1">listPairedDevices(){</span>
+        <span class="s2">/*Wenn die Geräte aufgelistet werden sollen, werden die umliegenden Elemente unsichtbar. Dies geschieht mit der Methode setVisibility().*/</span>
+        <span class="s0">if</span><span class="s1">(stateOfPairedList==</span><span class="s4">0</span><span class="s1">) {</span>
+            tv_steering.setVisibility(View.INVISIBLE)<span class="s0">;</span>
+            <span class="s1">tv_camera.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_up.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_down.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_left.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_right.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Left.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Right.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Up.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Down.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">webView.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">DevicesListView.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+
+            <span class="s1">PairedDevices = BTAdapter.getBondedDevices()</span><span class="s0">;</span>
+
+            if <span class="s1">(BTAdapter.isEnabled()) {</span>
+                <span class="s2">/* Geräte Name und Adresse werden dem BTArrayAdapter übergeben */</span>
+                <span class="s0">for </span><span class="s1">(BluetoothDevice device : PairedDevices) {</span>
+                    BTArrayAdapter.add(device.getName() + <span class="s3">&quot;</span><span class="s0">\n</span><span class="s3">&quot; </span><span class="s1">+ device.getAddress())</span><span class="s0">;</span>
+                <span class="s1">}</span>
+                Toast.makeText(getApplicationContext()<span class="s0">, </span><span class="s3">&quot;Show Paired Devices&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">else </span><span class="s1">{</span>
+                Toast.makeText(getApplicationContext()<span class="s0">, </span><span class="s3">&quot;Bluetooth not on&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+            <span class="s1">}</span>
+            stateOfPairedList=<span class="s4">1</span><span class="s0">;</span>
+        <span class="s1">}</span><span class="s0">else if</span><span class="s1">(stateOfPairedList==</span><span class="s4">1</span><span class="s1">){</span>
+            <span class="s2">/*Wenn die Geräte nicht mehr aufgelistet werden sollen, werden die umliegenden Elemente sichtbar gemacht.*/</span>
+            <span class="s1">DevicesListView.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">tv_steering.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">tv_camera.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_up.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_down.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_left.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_right.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Left.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Right.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Up.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Down.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">webView.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+
+            <span class="s1">stateOfPairedList=</span><span class="s4">0</span><span class="s0">;</span>
+        <span class="s1">}</span>
+    }
+
+
+    <span class="s2">/*Wenn ein BT-Gerät ausgewählt werden soll, muss dazu eine Liste mit den Namen der schon bekannten BT-Geräte 
+      gefüllt werden. Ebenfalls muss definiert werden was passieren soll wenn eines dieser Geräte ausgewählt (geklickt) wird. */</span>
+    <span class="s0">private </span><span class="s1">AdapterView.OnItemClickListener mDeviceClickListener = </span><span class="s0">new </span><span class="s1">AdapterView.OnItemClickListener() {</span>
+        <span class="s0">public void </span><span class="s1">onItemClick(AdapterView&lt;?&gt; av</span><span class="s0">, </span><span class="s1">View v</span><span class="s0">, int </span><span class="s1">arg2</span><span class="s0">, long </span><span class="s1">arg3) {</span>
+
+            <span class="s0">if</span><span class="s1">(!BTAdapter.isEnabled()) {</span>
+                Toast.makeText(getBaseContext()<span class="s0">, </span><span class="s3">&quot;Bluetooth not on&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                return;
+            <span class="s1">}</span>
+            <span class="s2">/*Wenn ein Gerät ausgewählt wurde, wird die Liste der Geräte wieder unsichtbar und die anderen Steuerelemente 
+              werden wieder angezeigt.*/</span>
+            <span class="s1">DevicesListView.setVisibility(View.INVISIBLE)</span><span class="s0">;</span>
+            <span class="s1">tv_steering.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">tv_camera.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_up.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_down.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_left.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_right.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Left.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Right.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Up.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">btn_Cam_Down.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+            <span class="s1">webView.setVisibility(View.VISIBLE)</span><span class="s0">;</span>
+
+            <span class="s1">stateOfPairedList=</span><span class="s4">0</span><span class="s0">;</span>
+
+            <span class="s1">tv_BluetoothStatus.setText(</span><span class="s3">&quot;Connecting...&quot;</span><span class="s1">)</span><span class="s0">;</span>
+            <span class="s2">/*Erfassen der Mac-Adresse des Gerätes. Die Mac-Adresse finden wir in den letzten 17 Zeichen des Strings*/</span>
+            <span class="s1">String info = ((TextView) v).getText().toString()</span><span class="s0">;</span>
+            final <span class="s1">String address = info.substring(info.length() - </span><span class="s4">17</span><span class="s1">)</span><span class="s0">;</span>
+            final <span class="s1">String name = info.substring(</span><span class="s4">0</span><span class="s0">,</span><span class="s1">info.length() - </span><span class="s4">17</span><span class="s1">)</span><span class="s0">;</span>
+
+            <span class="s2">/*Einen neuer wird erstellt um die anderen laufenden Anwendungen nicht zu blockieren*/</span>
+            <span class="s0">new </span><span class="s1">Thread()</span>
+            {
+                <span class="s0">public void </span><span class="s1">run() {</span>
+                    <span class="s0">boolean </span><span class="s1">fail = </span><span class="s0">false;</span>
+
+                    <span class="s1">BluetoothDevice device = BTAdapter.getRemoteDevice(address)</span><span class="s0">;</span>
+
+                    try <span class="s1">{</span>
+                        <span class="s2">/*Hier wird eine neue Bluetooth-Schnittstelle(BTSocket) erstellt (ähnlich wie ein TCP Socket). 
+                          Dieser Verbindungspunkt erlaubt den Austausch von Daten mit anderen BT-Geräten 
+                          die einen Input- oder Output-Stream benutzen.*/</span>
+                        <span class="s1">BTSocket = createBluetoothSocket(device)</span><span class="s0">;</span>
+
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e) {</span>
+                        fail = <span class="s0">true;</span>
+                        <span class="s1">Toast.makeText(getBaseContext()</span><span class="s0">, </span><span class="s3">&quot;Socket creation failed&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span>
+                    <span class="s2">/*Durch den Aufruf von connect() auf dem BluetoothSocket versucht das System, 
+                      eine Verbindung zum Socket auf dem Server herzustellen. Ist dies von Erfolg gekrönt, 
+                      kann zwischen beiden eine Kommunikation stattfinden. */</span>
+                    <span class="s0">try </span><span class="s1">{</span>
+                        BTSocket.connect()<span class="s0">;</span>
+                    <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e) {</span>
+                        <span class="s0">try </span><span class="s1">{</span>
+                            fail = <span class="s0">true;</span>
+                            <span class="s1">BTSocket.close()</span><span class="s0">;</span>
+                            <span class="s1">Handler.obtainMessage(CONNECTING_STATUS</span><span class="s0">, </span><span class="s1">-</span><span class="s4">1</span><span class="s0">, </span><span class="s1">-</span><span class="s4">1</span><span class="s1">)</span>
+                                    .sendToTarget()<span class="s0">;</span>
+                        <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e2) {</span>
+                            Toast.makeText(getBaseContext()<span class="s0">, </span><span class="s3">&quot;Socket creation failed&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                        <span class="s1">}</span>
+                    }
+                    <span class="s0">if</span><span class="s1">(fail == </span><span class="s0">false</span><span class="s1">) {</span>
+                        ConnectedThread = <span class="s0">new </span><span class="s1">ConnectedThread(BTSocket)</span><span class="s0">;</span>
+                        <span class="s1">ConnectedThread.start()</span><span class="s0">;</span>
+
+                        <span class="s1">Handler.obtainMessage(CONNECTING_STATUS</span><span class="s0">, </span><span class="s4">1</span><span class="s0">, </span><span class="s1">-</span><span class="s4">1</span><span class="s0">, </span><span class="s1">name)</span>
+                                .sendToTarget()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                }
+            }.start()<span class="s0">;</span>
+        <span class="s1">}</span>
+    }<span class="s0">;</span>
+
+
+    <span class="s2">/*Durch den Aufruf von createRfcommSocketToServiceRecord(UUID) auf dem gewählten Gerät, 
+      erhalten wir ein BluetoothSocket-Objekt. 
+      Stellt eine sichere Ausgangsverbindung zum BT-Gerät mittles der UUID her.*/</span>
+    <span class="s0">private </span><span class="s1">BluetoothSocket createBluetoothSocket(BluetoothDevice device) </span><span class="s0">throws </span><span class="s1">IOException {</span>
+        <span class="s0">return  </span><span class="s1">device.createRfcommSocketToServiceRecord(BTMODULEUUID)</span><span class="s0">;</span>
+    <span class="s1">}</span>
+
+
+    <span class="s2">/*Daten-Handhabung 
+    *Der Aufbau einer Verbindung zwischen zwei Bluetooth-Geräten ist nur die eine Seite der Medaille. 
+    *Nach dem Aufbau dieser Verbindung muss dann auch noch der Austausch der Daten bewältigt werden. 
+    *Bei der Übertragung der Daten kommen Input- und Outputstreams zum Einsatz. 
+    *Beispiel-Implementierung für die Handhabung der Daten: */</span>
+    <span class="s0">private class </span><span class="s1">ConnectedThread </span><span class="s0">extends </span><span class="s1">Thread {</span>
+        <span class="s0">private final </span><span class="s1">BluetoothSocket mmSocket</span><span class="s0">;</span>
+        private final <span class="s1">InputStream mmInStream</span><span class="s0">;</span>
+        private final <span class="s1">OutputStream mmOutStream</span><span class="s0">;</span>
+
+
+        <span class="s2">/*Es wird ein Thread erstellt um eine Verbindung mit den Geräten einzugehen um den 
+          Input- und den Output-Stream zu erfassen.*/</span>
+        <span class="s0">public </span><span class="s1">ConnectedThread(BluetoothSocket socket) {</span>
+            mmSocket = socket<span class="s0">;</span>
+            <span class="s1">InputStream tmpIn = </span><span class="s0">null;</span>
+            <span class="s1">OutputStream tmpOut = </span><span class="s0">null;</span>
+
+            try <span class="s1">{</span>
+                tmpIn = socket.getInputStream()<span class="s0">;</span>
+                <span class="s1">tmpOut = socket.getOutputStream()</span><span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e) { }</span>
+
+            mmInStream = tmpIn<span class="s0">;</span>
+            <span class="s1">mmOutStream = tmpOut</span><span class="s0">;</span>
+        <span class="s1">}</span>
+
+        <span class="s0">public void </span><span class="s1">run() {</span>
+            <span class="s2">/*Neuer Buffer für den Stream wird erstellt*/</span>
+            <span class="s0">byte</span><span class="s1">[] buffer = </span><span class="s0">new byte</span><span class="s1">[</span><span class="s4">1024</span><span class="s1">]</span><span class="s0">;</span>
+            <span class="s2">/*Variable zum erfassen des read() Inhaltes.*/</span>
+            <span class="s0">int </span><span class="s1">bytes</span><span class="s0">;</span>
+            <span class="s2">/*Solange kein Fehler passiert wird der InputStream ausgelesen*/</span>
+            <span class="s0">while </span><span class="s1">(</span><span class="s0">true</span><span class="s1">) {</span>
+                <span class="s0">try </span><span class="s1">{</span>
+                    <span class="s2">/*Input Stream auslesen*/</span>
+                    <span class="s1">bytes = mmInStream.available()</span><span class="s0">;</span>
+                    if<span class="s1">(bytes != </span><span class="s4">0</span><span class="s1">) {</span>
+                        <span class="s2">/*Kurze Pause um auf den Datenstrom zu warten, variabel.*/</span>
+                        <span class="s1">SystemClock.sleep(</span><span class="s4">500</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s2">/*Wie viele bytes sind zum einlesen vorhande ?*/</span>
+                        <span class="s1">bytes = mmInStream.available()</span><span class="s0">;</span>
+                        <span class="s2">/*Hier wird noch einmal festgehalten ie viele bytes nun wirklich eingelesen wurden*/</span>
+                        <span class="s1">bytes = mmInStream.read(buffer</span><span class="s0">, </span><span class="s4">0</span><span class="s0">, </span><span class="s1">bytes)</span><span class="s0">;</span>
+                        <span class="s2">/*Versenden der erfassten Daten an das UserInterface.*/</span>
+                        <span class="s1">Handler.obtainMessage(MESSAGE_READ</span><span class="s0">, </span><span class="s1">bytes</span><span class="s0">, </span><span class="s1">-</span><span class="s4">1</span><span class="s0">, </span><span class="s1">buffer)</span>
+                                .sendToTarget()<span class="s0">;</span>
+                    <span class="s1">}</span>
+                } <span class="s0">catch </span><span class="s1">(IOException e) {</span>
+                    e.printStackTrace()<span class="s0">;</span>
+
+                    break;
+                <span class="s1">}</span>
+            }
+        }
+
+        <span class="s2">/* Mit dieser Methode kann an einen verbundenen Stream geschrieben werden */</span>
+        <span class="s0">public void </span><span class="s1">write(String input) {</span>
+            <span class="s2">/*Wandelt einen empfangenen String in bytes um.*/</span>
+            <span class="s0">byte</span><span class="s1">[] bytes = input.getBytes()</span><span class="s0">;</span>
+            try <span class="s1">{</span>
+                mmOutStream.write(bytes)<span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e) { }</span>
+        }
+
+        <span class="s2">/* Mit dieser Methode kann eine Stream-Verbindung unterbrochen werden */</span>
+        <span class="s0">public void </span><span class="s1">cancel() {</span>
+            <span class="s0">try </span><span class="s1">{</span>
+                mmSocket.close()<span class="s0">;</span>
+            <span class="s1">} </span><span class="s0">catch </span><span class="s1">(IOException e) { }</span>
+        }
+    }
+
+
+    <span class="s2">/*In userer App soll nachher der Live Stream der Kamera, des RaspberryPi´s, angezeigt werden. Mit der Methode loadUrl() 
+    können wir nun unsere gewünschte Webseite, wie in einem Browser, aufrufen. 
+    In unserem Fall tragen wir die IP-Adresse des RaspberryPi´s und den Port auf welchen er den Stream weiterleitet ein. 
+    Falls ein Fehler auftritt, wie zum Beispiel wenn die Webseite nicht erreicht werden kann, wird eine Errorpage ausgegeben. */</span>
+    <span class="s0">public void </span><span class="s1">webViewInit(){</span>
+        webView.getSettings().setJavaScriptEnabled(<span class="s0">true</span><span class="s1">)</span><span class="s0">;</span>
+        <span class="s1">webView.setWebViewClient(</span><span class="s0">new </span><span class="s1">WebViewClient())</span><span class="s0">;</span>
+
+        try <span class="s1">{</span>
+            webView.loadUrl(<span class="s3">&quot;http://192.168.178.24:8000&quot;</span><span class="s1">)</span><span class="s0">;</span>
+
+        <span class="s1">}</span><span class="s0">catch </span><span class="s1">(Exception e){</span>
+            e.printStackTrace()<span class="s0">;</span>
+        <span class="s1">}</span>
+        webView.setWebViewClient(<span class="s0">new </span><span class="s1">WebViewClient() {</span>
+            <span class="s0">public void </span><span class="s1">onReceivedError(WebView view</span><span class="s0">, int </span><span class="s1">errorCode</span><span class="s0">, </span><span class="s1">String description</span><span class="s0">, </span><span class="s1">String failingUrl) {</span>
+                webView.loadData(<span class="s3">&quot;&lt;html&gt;&lt;body&gt;&lt;h1&gt;SORRY, NO STREAM AVAILABLE ATM&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="s0">,</span><span class="s3">&quot;text/html&quot;</span><span class="s0">,</span><span class="s3">&quot;utf-8&quot;</span><span class="s1">)</span><span class="s0">;</span>
+
+            <span class="s1">}</span>
+        })<span class="s0">;</span>
+    <span class="s1">}</span>
+
+
+    <span class="s2">/*Wenn das OptionsMenu, rechts oben geklickt wird, kann der gewünschte Modus ausgewählt werden. 
+    In unserem Fall klickt nun der User beispielsweise auf &quot;mode Camera&quot; und es wird über unsere Bluetooth-Verbindung &quot;ConnectedThead&quot; 
+    eine String mit dem Inhalt 8 an unseren Bluetooth-Stick am Arduino gesendet. Dieser liest nun den String aus und schaltet in den Kamera-Modus um. 
+    Das gleiche passiert bei &quot;mode Self&quot; = &quot;9&quot; oder &quot;mode Boon&quot; = &quot;7&quot;.*/</span>
+    <span class="s1">@Override</span>
+    <span class="s0">public boolean </span><span class="s1">onOptionsItemSelected(@NonNull MenuItem item) {</span>
+        <span class="s0">super</span><span class="s1">.onOptionsItemSelected(item)</span><span class="s0">;</span>
+        switch<span class="s1">(item.getItemId()){</span>
+            <span class="s0">case </span><span class="s1">R.id.modeSelf:</span>
+
+                <span class="s0">try </span><span class="s1">{</span>
+                    <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">) {</span>
+                        ConnectedThread.write(<span class="s3">&quot;9&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">Toast.makeText(getBaseContext()</span><span class="s0">, </span><span class="s3">&quot;mode Self&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span><span class="s0">else</span><span class="s1">{</span>
+                        Toast.makeText(getBaseContext()<span class="s0">, </span><span class="s3">&quot;mode not changed&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span>
+                }<span class="s0">catch </span><span class="s1">(Exception e){</span>
+                    e.printStackTrace()<span class="s0">;</span>
+                <span class="s1">}</span>
+                <span class="s0">return true;</span>
+            case <span class="s1">R.id.modeCamera:</span>
+
+                <span class="s0">try </span><span class="s1">{</span>
+                    <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">) {</span>
+                        ConnectedThread.write(<span class="s3">&quot;8&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">Toast.makeText(getBaseContext()</span><span class="s0">, </span><span class="s3">&quot;mode Camera&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span><span class="s0">else</span><span class="s1">{</span>
+                        Toast.makeText(getBaseContext()<span class="s0">, </span><span class="s3">&quot;mode not changed&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span>
+                }<span class="s0">catch </span><span class="s1">(Exception e){</span>
+                    e.printStackTrace()<span class="s0">;</span>
+                <span class="s1">}</span>
+                <span class="s0">return true;</span>
+            case <span class="s1">R.id.modeBoon:</span>
+
+                <span class="s0">try </span><span class="s1">{</span>
+                    <span class="s0">if </span><span class="s1">(ConnectedThread != </span><span class="s0">null</span><span class="s1">) {</span>
+                        ConnectedThread.write(<span class="s3">&quot;7&quot;</span><span class="s1">)</span><span class="s0">;</span>
+                        <span class="s1">Toast.makeText(getBaseContext()</span><span class="s0">, </span><span class="s3">&quot;mode Boon&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span><span class="s0">else</span><span class="s1">{</span>
+                        Toast.makeText(getBaseContext()<span class="s0">, </span><span class="s3">&quot;mode not changed&quot;</span><span class="s0">, </span><span class="s1">Toast.LENGTH_SHORT).show()</span><span class="s0">;</span>
+                    <span class="s1">}</span>
+                }<span class="s0">catch </span><span class="s1">(Exception e){</span>
+                    e.printStackTrace()<span class="s0">;</span>
+                <span class="s1">}</span>
+                <span class="s0">return true;</span>
+            default<span class="s1">:</span>
+                <span class="s0">return false;</span>
+
+        <span class="s1">}</span>
+
+    }
+
+
+    <span class="s2">/*Um ein OptionsMenu aufzurufen muss es vorher noch initialisiert werden. 
+    Dies geschieht mit einem MenuInflater welcher nun unser Menu &quot;main_menu&quot; &quot;aufbläst&quot;. */</span>
+    <span class="s1">@Override</span>
+    <span class="s0">public boolean </span><span class="s1">onCreateOptionsMenu(Menu menu) {</span>
+        MenuInflater menuInflater =getMenuInflater()<span class="s0">;</span>
+        <span class="s1">menuInflater.inflate(R.menu.main_menu</span><span class="s0">, </span><span class="s1">menu)</span><span class="s0">;</span>
+
+        return super<span class="s1">.onCreateOptionsMenu(menu)</span><span class="s0">;</span>
+    <span class="s1">}</span>
+}<span class="s2">// Main Activity</span>
+</pre>
+</body>
+</html>
